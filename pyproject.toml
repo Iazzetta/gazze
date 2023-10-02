@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gazze"
-version = "0.1.2"
+version = "0.1.21"
 description = "Fastest python web framework"
 authors = ["Guilherme Iazzetta <guilherme.iazzetta@gmail.com>"]
 readme = "README.md"
