@@ -6,6 +6,7 @@ from typing import (
     Union,
     cast,
 )
+from gazze.datastructures import DefaultPlaceholder, DefaultType
 
 def is_body_allowed_for_status_code(status_code: Union[int, str, None]) -> bool:
     if status_code is None:
@@ -43,3 +44,13 @@ def deep_dict_update(main_dict: Dict[Any, Any], update_dict: Dict[Any, Any]) -> 
             main_dict[key] = main_dict[key] + update_dict[key]
         else:
             main_dict[key] = value
+
+def get_value_or_default(
+    first_item: Union[DefaultPlaceholder, DefaultType],
+    *extra_items: Union[DefaultPlaceholder, DefaultType],
+) -> Union[DefaultPlaceholder, DefaultType]:
+    items = (first_item,) + extra_items
+    for item in items:
+        if not isinstance(item, DefaultPlaceholder):
+            return item
+    return first_item

@@ -4,6 +4,7 @@ from typing import (
     Awaitable,
     Callable,
     Coroutine,
+    Sequence,
     Dict,
     List,
     Optional,
@@ -11,8 +12,12 @@ from typing import (
     TypeVar,
     Union,
 )
-from hypercorn.config import Config
 from gazze.exceptions import RequestValidationError
+from gazze.datastructures import Default, DefaultPlaceholder
+from gazze.types import DecoratedCallable, IncEx
+from gazze.responses import JSONResponse
+from gazze.routing import GRouter
+from gazze.params import Depends
 from gazze.exception_handlers import (
     http_exception_handler,
     request_validation_exception_handler,
@@ -25,7 +30,8 @@ from starlette.responses import Response
 from starlette.middleware.errors import ServerErrorMiddleware
 from starlette.middleware.exceptions import ExceptionMiddleware
 from gazze.middleware.asyncexitstack import AsyncExitStackMiddleware
-from starlette.types import ASGIApp
+from starlette.types import ASGIApp, Scope, Receive, Send
+# from starlette.types import ASGIApp, Lifespan, Receive, Scope, Send
 from starlette.requests import Request
 from starlette.exceptions import HTTPException
 from hypercorn.asyncio import serve
@@ -45,13 +51,21 @@ class Gazze(Starlette):
                 Callable[[Request, Any], Coroutine[Any, Any, Response]],
             ]
         ] = None,
+        default_response_class: Type[Response] = Default(JSONResponse),
+        dependencies: Optional[Sequence[Depends]] = None,
+        response_class: Union[Type[Response], DefaultPlaceholder] = Default(
+            JSONResponse
+        ),
     ) -> None:
         self.debug = debug
         self.title = title
         self.description = description
         self.version = version
         self.state: State = State()
-        self.router: Router = Router()
+        self.router: GRouter = GRouter()
+        self.default_response_class = default_response_class
+        self.response_class = response_class
+        self.dependencies = dependencies
         self.dependency_overrides: Dict[Callable[..., Any], Callable[..., Any]] = {}
         self.exception_handlers: Dict[
             Any, Callable[[Request, Any], Union[Response, Awaitable[Response]]]
@@ -65,11 +79,22 @@ class Gazze(Starlette):
 
     def add_route(
         self,
+        *,
         path: str,
         endpoint: Callable[..., Coroutine[Any, Any, Response]],
         methods: Optional[List[str]] = None,
+        dependencies: Optional[Sequence[Depends]] = None,
+        response_class: Union[Type[Response], DefaultPlaceholder] = Default(
+            JSONResponse
+        ),
     ) -> None:
-        self.router.add_route(path=path, endpoint=endpoint, methods=methods)
+        self.router.add_route(
+            path=path, 
+            endpoint=endpoint, 
+            methods=methods, 
+            dependencies=dependencies,
+            response_class=response_class
+        )
 
     def build_middleware_stack(self) -> ASGIApp:
         debug = self.debug
@@ -98,5 +123,114 @@ class Gazze(Starlette):
             app = cls(app=app, **options)
         return app
     
-    def run(self, config: Config = Config()):
-        asyncio.run(serve(self, config, mode='asgi'))
+    def get(
+        self,
+        path: str,
+        *,
+        methods: Optional[List[str]] = None,
+        dependencies: Optional[Sequence[Depends]] = None,
+        response_class: Union[Type[Response], DefaultPlaceholder] = Default(
+            JSONResponse
+        ),
+    ) -> Callable[[DecoratedCallable], DecoratedCallable]:
+        return self.router.get(
+            path=path, 
+            dependencies=dependencies,
+            response_class=response_class
+        )
+
+    def put(
+        self,
+        path: str,
+        *,
+        methods: Optional[List[str]] = None,
+        dependencies: Optional[Sequence[Depends]] = None,
+        response_class: Union[Type[Response], DefaultPlaceholder] = Default(
+            JSONResponse
+        ),
+    ) -> Callable[[DecoratedCallable], DecoratedCallable]:
+        return self.router.put(
+            path=path, 
+            dependencies=dependencies,
+            response_class=response_class
+        )
+
+    def post(
+        self,
+        path: str,
+        *,
+        methods: Optional[List[str]] = None,
+        dependencies: Optional[Sequence[Depends]] = None,
+        response_class: Union[Type[Response], DefaultPlaceholder] = Default(
+            JSONResponse
+        ),
+    ) -> Callable[[DecoratedCallable], DecoratedCallable]:
+        return self.router.post(
+            path=path, 
+            dependencies=dependencies,
+            response_class=response_class
+        )
+
+    def delete(
+        self,
+        path: str,
+        *,
+        methods: Optional[List[str]] = None,
+        dependencies: Optional[Sequence[Depends]] = None,
+        response_class: Union[Type[Response], DefaultPlaceholder] = Default(
+            JSONResponse
+        ),
+    ) -> Callable[[DecoratedCallable], DecoratedCallable]:
+        return self.router.delete(
+            path=path, 
+            dependencies=dependencies,
+            response_class=response_class
+        )
+
+    def options(
+        self,
+        path: str,
+        *,
+        methods: Optional[List[str]] = None,
+        dependencies: Optional[Sequence[Depends]] = None,
+        response_class: Union[Type[Response], DefaultPlaceholder] = Default(
+            JSONResponse
+        ),
+    ) -> Callable[[DecoratedCallable], DecoratedCallable]:
+        return self.router.options(
+            path=path, 
+            dependencies=dependencies,
+            response_class=response_class
+        )
+
+    def head(
+        self,
+        path: str,
+        *,
+        methods: Optional[List[str]] = None,
+        dependencies: Optional[Sequence[Depends]] = None,
+        response_class: Union[Type[Response], DefaultPlaceholder] = Default(
+            JSONResponse
+        ),
+    ) -> Callable[[DecoratedCallable], DecoratedCallable]:
+        return self.router.head(
+            path=path, 
+            dependencies=dependencies,
+            response_class=response_class
+        )
+
+    def patch(
+        self,
+        path: str,
+        *,
+        methods: Optional[List[str]] = None,
+        dependencies: Optional[Sequence[Depends]] = None,
+        response_class: Union[Type[Response], DefaultPlaceholder] = Default(
+            JSONResponse
+        ),
+    ) -> Callable[[DecoratedCallable], DecoratedCallable]:
+        return self.router.patch(
+            path=path, 
+            dependencies=dependencies,
+            response_class=response_class
+        )

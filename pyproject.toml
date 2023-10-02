@@ -8,7 +8,6 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.9"
 starlette = "^0.31.1"
-hypercorn = "^0.14.4"
 click = "^8.1.7"
 pydantic = "^2.4.2"
 
