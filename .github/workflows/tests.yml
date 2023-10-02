@@ -1,10 +1,19 @@
-steps:
-  - uses: actions/checkout@v4
-  - name: Gazze Tests
-    uses: actions/setup-python@v4
-    with:
-      python-version: ["3.9", "3.10", "3.11"]
-  - name: Test with pytest
-    run: |
-      pip install pytest pytest-cov
-      pytest tests/test_gazze.py
+name: Python package
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Gazze Tests
+        uses: actions/setup-python@v4
+      - name: Test with pytest
+        run: |
+          pip install pytest pytest-cov
+          pytest tests/test_gazze.py
